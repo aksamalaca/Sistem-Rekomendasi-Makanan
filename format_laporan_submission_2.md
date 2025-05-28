@@ -10,8 +10,8 @@ Proyek ini bertujuan untuk mengembangkan sistem rekomendasi makanan menggunakan 
 Pentingnya penyelesaian masalah ini didukung oleh riset yang menunjukkan bahwa sistem rekomendasi memainkan peranan vital dalam berbagai bidang e-commerce dan layanan daring, termasuk makanan (Ricci et al., 2015). Studi juga menegaskan bahwa personalisasi melalui algoritma rekomendasi dapat meningkatkan tingkat kepuasan dan keterlibatan pengguna secara signifikan (Adomavicius & Tuzhilin, 2005). Oleh karena itu, penerapan metode machine learning dan analisis data yang tepat dalam konteks sistem rekomendasi makanan sangat penting untuk menghadirkan solusi yang efektif dan bermanfaat.
 
 **Referensi:**
-- [APA] (-	F. Ricci, L. Rokach, and B. Shapira, Recommender Systems Handbook, 2nd ed. Springer, 2015.)
-- [APA] (-	G. Adomavicius and A. Tuzhilin, "Toward the next generation of recommender systems: A survey of the state-of-the-art and possible extensions," IEEE Transactions on Knowledge and Data Engineering, vol. 17, no. 6, pp. 734–749, Jun. 2005.)
+- [APA] (F. Ricci, L. Rokach, and B. Shapira, Recommender Systems Handbook, 2nd ed. Springer, 2015.)
+- [APA] (G. Adomavicius and A. Tuzhilin, "Toward the next generation of recommender systems: A survey of the state-of-the-art and possible extensions," IEEE Transactions on Knowledge and Data Engineering, vol. 17, no. 6, pp. 734–749, Jun. 2005.)
 
 ## Business Understanding
 
@@ -170,5 +170,3 @@ RMSE memberikan ukuran kesalahan dalam satuan yang sama dengan rating yang diber
 Secara keseluruhan, hasil evaluasi menunjukkan bahwa model rekomendasi makanan yang dikembangkan memiliki kinerja yang baik dalam memprediksi rating. Nilai MSE dan RMSE yang diperoleh menunjukkan bahwa model dapat diandalkan untuk memahami preferensi pengguna dan memberikan rekomendasi yang sesuai. Meskipun ada ruang untuk perbaikan, nilai kesalahan yang relatif kecil ini menunjukkan bahwa model sudah berada pada jalur yang benar dalam memberikan rekomendasi makanan yang relevan dan akurat.    
 
 Dengan demikian, model ini dapat digunakan sebagai alat yang efektif untuk membantu pengguna dalam menemukan makanan yang sesuai dengan selera dan preferensi mereka. 
-
-**---Ini adalah bagian akhir laporan---**
