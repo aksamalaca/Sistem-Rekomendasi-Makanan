@@ -22,7 +22,6 @@ Pada tahap ini, dilakukan klarifikasi dan pemahaman terhadap masalah bisnis yang
 2.	Data interaksi pengguna dengan makanan, berupa rating, masih terbatas dan tidak merata, sehingga menyulitkan sistem dalam memberikan rekomendasi yang akurat, terutama untuk pengguna baru atau makanan yang belum banyak dinilai.
 
 ### Goals
-
 1.	Membangun sistem rekomendasi makanan yang dapat memberikan rekomendasi makanan sesuai preferensi pengguna berdasarkan karakteristik makanan dan riwayat interaksi pengguna, sehingga pengguna lebih mudah menemukan makanan yang mereka sukai.    
 2.	Meningkatkan kualitas dan cakupan rekomendasi dengan mengimplementasikan metode rekomendasi hybrid (content-based filtering dan collaborative filtering) agar mampu mengatasi keterbatasan data rating dan memberikan rekomendasi yang relevan untuk semua pengguna, termasuk pengguna baru.
 
@@ -89,84 +88,106 @@ Untuk memahami data lebih dalam, beberapa tahapan EDA dilakukan, termasuk visual
 ## Data Preparation
 Pada tahap ini, dilakukan serangkaian teknik persiapan data (data preparation) yang bertujuan untuk memastikan kualitas dan konsistensi data sebelum digunakan dalam pembangunan model rekomendasi. Proses data preparation dilakukan secara berurutan sebagai berikut:    
 1.	**Pemeriksaan Missing Values**
-Dilakukan pengecekan terhadap nilai yang hilang pada kedua dataset (`foods` dan `ratings`). Missing values dapat menyebabkan error atau bias dalam analisis serta model, sehingga penting untuk mengidentifikasi dan menanganinya.
-    - Hasil pemeriksaan menemukan beberapa nilai kosong pada dataset `ratings`.    
+Dilakukan pengecekan nilai kosong pada dua dataset utama: `foods` dan `ratings`.
+- Dataset `foods` tidak memiliki missing value.
+- Dataset `ratings` memiliki satu baris dengan nilai NaN pada ketiga kolom (`User_ID`, `Food_ID`, `Rating`).
 
 2.	**Menghapus Baris dengan Missing Values**
-Pada dataset `ratings`, baris yang mengandung nilai NaN dihapus. Hal ini dilakukan karena data rating yang lengkap sangat penting untuk keakuratan model collaborative filtering. Baris-baris yang tidak lengkap dikhawatirkan akan mengganggu proses pelatihan model.   
+Baris yang mengandung nilai kosong dihapus dari dataset `ratings` untuk memastikan integritas data dan keakuratan model, khususnya dalam metode Collaborative Filtering yang sangat sensitif terhadap data yang tidak lengkap.
 
 3.	**Pengubahan Tipe Data**
-Untuk menjaga konsistensi dan efisiensi pemrosesan data, kolom `User_ID` dan `Food_ID` pada dataset ratings diubah menjadi tipe data integer. Ini penting agar proses encoding dan pembuatan matriks user-item berjalan lancar serta menghindari error tipe data.   
+Untuk keperluan pemrosesan numerik dan encoding:
+- Kolom `User_ID` dan `Food_ID` pada dataset `ratings` diubah dari float menjadi integer agar dapat diolah lebih efisien dan akurat, terutama untuk proses encoding.
+- Kolom `Rating` tetap dalam tipe float untuk keperluan normalisasi ke skala 0-1.
 
 4.	**Penghilangan Spasi pada Kategori**
-Pada dataset `foods`, kolom `C_Type` dan `Veg_Non` dibersihkan dari spasi tambahan yang tidak konsisten. Hal ini dilakukan untuk memastikan semua kategori yang sama memiliki penamaan yang konsisten sehingga analisis kategori dan pembentukan fitur berjalan dengan benar.  
+Dilakukan penghapusan spasi di awal/akhir string pada kolom `C_Type` dan `Veg_Non` di dataset `foods` untuk menghindari nilai kategori ganda yang identik secara semantik namun berbeda secara sintaksis (misal: " Korean" vs "Korean").
 
 5.	**Penggabungan Dataset**
-Dataset `ratings` dan `foods` digabungkan berdasarkan kolom Food_ID dengan metode left join. Tujuannya adalah untuk mendapatkan data yang komprehensif, yaitu data rating beserta atribut makanan terkait. Ini memudahkan analisis lanjutan dan pengembangan model rekomendasi yang memanfaatkan informasi makanan.    
+Dataset `ratings` dan `foods` digabung berdasarkan `Food_ID` menggunakan metode left join, sehingga setiap data rating dilengkapi dengan atribut makanan terkait (nama, jenis masakan, kategori, dan deskripsi). Hal ini memudahkan proses eksplorasi dan pembangunan model rekomendasi berbasis konten.
 
 6.	**Verifikasi Kembali Missing Values pada Gabungan Dataset**
 Setelah penggabungan, dilakukan pengecekan ulang nilai kosong untuk memastikan proses penggabungan tidak menghasilkan missing value baru yang dapat mengganggu pemodelan.    
 
+7. **Pembuatan Fitur Gabungan untuk TF-IDF (Content-Based Filtering)**
+Dibuat fitur teks gabungan dari kolom `C_Type`, `Veg_Non`, dan `Describe` menjadi satu kolom `combined_features` untuk digunakan pada Content-Based Filtering.
+
+8. **Vektorisasi TF-IDF**
+Fitur gabungan tersebut diproses menggunakan `TfidfVectorizer` untuk menghasilkan matriks numerik berbasis bobot term frequency-inverse document frequency (TF-IDF) dari deskripsi makanan. Matriks ini digunakan untuk menghitung kemiripan antar makanan dengan cosine similarity.
+
+9. **Encoding Kolom User_ID dan Food_ID (Collavorative Filtering)**
+`User_ID` dan `Food_ID` di-encode ke dalam indeks integer menggunakan dictionary mapping. Kolom baru bernama `user` dan `food` ditambahkan ke dataset ratings untuk menyimpan hasil encoding.
+
+10. **Normalisasi Nilai Rating**
+Kolom `Rating` dinormalisasi ke skala [0, 1] menggunakan rumus min-max normalization. Hal ini penting karena model deep learning yang digunakan (Collaborative Filtering) lebih stabil jika target berada dalam rentang 0–1.
+
+11. **Pembagian Dataset (Data Splitting)**
+Dataset `ratings` dibagi menjadi data pelatihan (80%) dan data validasi (20%) secara acak. Hal ini bertujuan untuk mengevaluasi performa model pada data yang tidak dilatih. Fitur input (`user`, `food`) dan target (`rating_norm`) dipisahkan untuk digunakan pada tahap pelatihan model Collaborative Filtering.
 
 ## Modeling
-Pada tahapan modeling ini, dibangun dua jenis model sistem rekomendasi yang berbeda untuk menyelesaikan permasalahan rekomendasi makanan, yaitu Content-Based Filtering dan Collaborative Filtering. Kedua model ini akan menghasilkan rekomendasi top-N makanan yang sesuai dengan kebutuhan pengguna.    
-1. **Content-Based Filtering**
-Model ini merekomendasikan makanan berdasarkan kemiripan konten atau fitur dari makanan itu sendiri. Menggunakan gabungan fitur kategori masakan, jenis makanan (veg/non-veg), dan deskripsi bahan sebagai input, kemudian melakukan vektorisasi menggunakan TF-IDF dan menghitung cosine similarity antar makanan.   
+Pada tahapan ini dibangun dua pendekatan sistem rekomendasi berbeda untuk menyelesaikan permasalahan rekomendasi makanan, yaitu Content-Based Filtering dan Collaborative Filtering. Kedua model menghasilkan top-N rekomendasi makanan yang disesuaikan dengan preferensi pengguna berdasarkan konten makanan atau riwayat rating pengguna.
 
-**Proses Utama:**
-- Gabungkan fitur-fitur tekstual makanan (C_Type, Veg_Non, Describe) menjadi satu kolom combined_features.
-- Lakukan TF-IDF vectorization pada fitur gabungan ini untuk mendapatkan representasi numerik.
-- Hitung cosine similarity antar makanan menggunakan matriks TF-IDF.
-- Buat fungsi rekomendasi yang mengembalikan top-N makanan paling mirip untuk makanan tertentu.  
+**1. Content-Based Filtering**
+Model ini merekomendasikan makanan berdasarkan kemiripan konten dari makanan itu sendiri, bukan dari interaksi pengguna. Fitur yang digunakan mencakup jenis masakan `(C_Type)`, kategori makanan `(Veg_Non)`, dan deskripsi bahan makanan `(Describe)`.
+**Langkah-langkah Modeling:**
+1. Tiga fitur tekstual (`C_Type`, `Veg_Non`, dan `Describe`) digabungkan menjadi kolom baru bernama `combined_features`.
+2. Representasi teks dari `combined_features` kemudian diproses menggunakan TF-IDF Vectorizer untuk membentuk matriks fitur.
+3. Cosine similarity digunakan untuk menghitung kemiripan antar makanan.
+4. Fungsi `recommend_food(nama_makanan, top_n=5)` mengembalikan daftar makanan yang paling mirip berdasarkan skor kemiripan tertinggi.
 
-**Output:**
+**Contoh Output:**
+`recommend_food("christmas cake", top_n=5)`
 ![Img_1](screenshot/gambar_1.png)
 
 **Kelebihan:**
-- Rekomendasi yang dipersonalisasi berdasarkan atribut makanan.
-- Tidak tergantung pada data rating pengguna, sehingga efektif pada data makanan baru. 
+- Dapat merekomendasikan makanan baru (*cold-start item*)
+- Rekomendasi dapat dijelaskan melalui fitur makanan yang mirip.
 
 **Kekurangan:**
-- Hanya merekomendasikan makanan yang mirip dengan yang sudah diketahui pengguna.
-- Kurang mampu menangani preferensi pengguna yang sangat unik.  
+- Tidak mempertimbangkan preferensi personal pengguna.
+- Hanya merekomendasikan makanan yang serupa dengan input.
 
-2. **Collaborative Filtering**
-Model ini memanfaatkan pola rating pengguna untuk merekomendasikan makanan. Melalui teknik embedding pada neural network, model belajar representasi pengguna dan makanan dan memprediksi rating untuk makanan yang belum dinilai pengguna.    
+**2. Collaborative Filtering (Neural Network)**
+Model ini memanfaatkan interaksi historis pengguna (dalam bentuk rating) untuk mempelajari preferensi pengguna. Pendekatan yang digunakan adalah neural collaborative filtering dengan embedding layer untuk pengguna dan makanan.
+**Langkah-langkah Modeling:**
+1. ID pengguna dan makanan di-encode menjadi indeks numerik.
+2. Nilai rating dinormalisasi ke rentang [0, 1].
+3. Dibangun model Neural Network sederhana:
+- Dua embedding layer: satu untuk pengguna, satu untuk makanan.
+- Operasi Dot Product dilakukan antara embedding pengguna dan makanan.
+4. Model dilatih menggunakan Mean Squared Error (MSE) sebagai fungsi kerugian.
+5. Setelah pelatihan, model digunakan untuk memprediksi rating makanan yang belum pernah dirating oleh pengguna tertentu.
+6. Makanan dengan prediksi rating tertinggi direkomendasikan ke pengguna.
 
-**Proses Utama:**
-- Lakukan encoding pada User_ID dan Food_ID agar dapat diproses model.
-- Normalisasikan rating menjadi rentang 0-1 untuk efisiensi pelatihan.
-- Bangun model neural network dengan embedding untuk pengguna dan makanan.
-- Latih model menggunakan data rating yang ada.
-- Prediksi rating untuk makanan yang belum dinilai dan rekomendasikan top-N dengan nilai prediksi tertinggi untuk setiap pengguna.    
-
-**Output:**
+**Contoh Output dengan ID User 95:**
 ![Img_2](screenshot/gambar_2.png)
 
 **Kelebihan:**
-- Bisa memberikan rekomendasi makanan yang tidak mirip dengan yang pernah dikonsumsi, memperluas variasi pilihan.
-- Mampu belajar dari pola preferensi pengguna lain untuk meningkatkan akurasi rekomendasi.    
+- Menangkap preferensi pengguna secara personal.
+- Rekomendasi lebih relevan dan kontekstual bagi masing-masing pengguna.
 
 **Kekurangan:**
-- Membutuhkan data interaksi pengguna dalam jumlah yang cukup.
-- Mengalami masalah cold start pada pengguna atau makanan baru tanpa rating. 
+- Tidak bekerja optimal untuk pengguna baru yang belum memiliki riwayat rating (*cold-start user*).
+- Membutuhkan data interaksi dalam jumlah cukup banyak untuk menghasilkan rekomendasi yang akurat.
 
 ## Evaluation
-Dalam proyek ini, saya menggunakan dua metrik evaluasi untuk menilai kinerja model rekomendasi makanan yang dikembangkan, yaitu `Mean Squared Error (MSE)` dan `Root Mean Squared Error (RMSE)`. Metrik ini dipilih karena relevansinya dalam konteks prediksi rating, yang merupakan tujuan utama dari model ini.     
+Dalam proyek ini, saya menggunakan beberapa metrik evaluasi untuk menilai kinerja model rekomendasi yang dikembangkan, baik untuk Content-Based Filtering (CBF) maupun Collaborative Filtering (CF). Berikut adalah penjelasan mengenai metrik yang digunakan dan hasil evaluasi berdasarkan metrik tersebut.
+**Metrik Evaluasi:**
+1. Precision@k: Precision mengukur proporsi rekomendasi yang relevan di antara k rekomendasi teratas. Ini memberikan gambaran tentang seberapa banyak dari rekomendasi yang diberikan yang benar-benar sesuai dengan preferensi pengguna.
+2. Recall@k: Recall mengukur proporsi item relevan yang berhasil direkomendasikan di antara semua item relevan yang ada. Ini menunjukkan seberapa baik model dalam menemukan item yang relevan.
+3. NDCG@k (Normalized Discounted Cumulative Gain): NDCG mengukur kualitas peringkat rekomendasi dengan mempertimbangkan posisi item relevan dalam daftar rekomendasi. Ini memberikan bobot lebih pada item relevan yang muncul lebih awal dalam daftar.
+4. Mean Squared Error (MSE) dan Root Mean Squared Error (RMSE): MSE mengukur rata-rata kuadrat selisih antara nilai yang diprediksi dan nilai aktual. RMSE adalah akar kuadrat dari MSE dan memberikan ukuran kesalahan dalam satuan yang sama dengan data asli.
 
-**Metrik Evaluasi yang Digunakan**
-1.	Mean Squared Error (MSE): MSE mengukur rata-rata kuadrat selisih antara rating aktual yang diberikan oleh pengguna dan rating yang diprediksi oleh model.
-2.	Root Mean Squared Error (RMSE): RMSE adalah akar kuadrat dari MSE dan memberikan ukuran kesalahan dalam satuan yang sama dengan rating asli.
- 
-**Hasil Evaluasi Proyek**
-Setelah menghitung MSE dan RMSE, kami mendapatkan hasil sebagai berikut:
-- **Mean Squared Error (MSE)**: `0.2843017512004052`.
-MSE memberikan gambaran tentang seberapa besar kesalahan yang dibuat oleh model dalam memprediksi rating. Semakin kecil nilai MSE, semakin baik model dalam memprediksi rating yang sesuai dengan preferensi pengguna. Dalam konteks ini, nilai `0.2843017512004052` menunjukkan bahwa model memiliki kesalahan yang relatif kecil dalam prediksi rating.  
+**Hasil Proyek Berdasarkan Metrik Evaluasi:**
+1. Evaluasi Content-Based Filtering:
+- Precision@5: 0.2000
+- Recall@5: 0.2000
+- NDCG@5: 0.1312
+Hasil ini menunjukkan bahwa dari 5 rekomendasi teratas, hanya 20% yang relevan dengan preferensi pengguna. Ini menunjukkan bahwa meskipun model dapat memberikan beberapa rekomendasi yang relevan, masih ada ruang untuk perbaikan dalam hal akurasi rekomendasi. NDCG yang rendah juga menunjukkan bahwa relevansi item relevan tidak muncul di posisi teratas dalam daftar rekomendasi.
 
-- **Root Mean Squared Error (RMSE)**: `0.5331995416355918`    
-RMSE memberikan ukuran kesalahan dalam satuan yang sama dengan rating yang diberikan (misalnya, jika rating berkisar antara 1 hingga 10, maka RMSE juga berada dalam rentang tersebut). Nilai `0.5331995416355918` berarti bahwa prediksi model cenderung menyimpang dari rating aktual sekitar setengah poin.
+2. Evaluasi Collaborative Filtering:
+- Mean Squared Error (MSE): 0.5049158441478518
+- Root Mean Squared Error (RMSE): 0.7105743058595996
 
 **Kesimpulan:**
-Secara keseluruhan, hasil evaluasi menunjukkan bahwa model rekomendasi makanan yang dikembangkan memiliki kinerja yang baik dalam memprediksi rating. Nilai MSE dan RMSE yang diperoleh menunjukkan bahwa model dapat diandalkan untuk memahami preferensi pengguna dan memberikan rekomendasi yang sesuai. Meskipun ada ruang untuk perbaikan, nilai kesalahan yang relatif kecil ini menunjukkan bahwa model sudah berada pada jalur yang benar dalam memberikan rekomendasi makanan yang relevan dan akurat.    
-
-Dengan demikian, model ini dapat digunakan sebagai alat yang efektif untuk membantu pengguna dalam menemukan makanan yang sesuai dengan selera dan preferensi mereka. 
+Proyek ini berhasil mengembangkan sistem rekomendasi makanan menggunakan dua pendekatan utama: Content-Based Filtering (CBF) dan Collaborative Filtering (CF). Evaluasi menunjukkan bahwa model CBF memiliki Precision@5 dan Recall@5 masing-masing sebesar 0.2000, menandakan bahwa hanya 20% dari rekomendasi teratas yang relevan, dengan NDCG@5 yang rendah (0.1312) menunjukkan perlunya perbaikan dalam akurasi rekomendasi. Sementara itu, model CF menunjukkan MSE sebesar 0.5049 dan RMSE sebesar 0.7106, menunjukkan kesalahan signifikan dalam prediksi rating. Meskipun CF dapat memberikan rekomendasi yang lebih personal, tantangan cold start untuk pengguna baru tetap ada. Oleh karena itu, penerapan metode hybrid yang menggabungkan kedua pendekatan dapat meningkatkan akurasi dan relevansi rekomendasi, serta mengatasi masalah cold start. Secara keseluruhan, sistem rekomendasi ini memiliki potensi besar untuk meningkatkan pengalaman pengguna dan membantu pelaku bisnis kuliner dalam memberikan layanan yang lebih personal dan berbasis data.
