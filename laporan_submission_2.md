@@ -84,7 +84,6 @@ Untuk memahami data lebih dalam, beberapa tahapan EDA dilakukan, termasuk visual
 2.	Distribusi Jenis Masakan (C_Type): Dari analisis jenis masakan, terlihat bahwa kategori Healthy Food dan Snack adalah yang paling banyak tersedia dalam dataset, sedangkan kategori lain seperti Korean dan Nepalese memiliki jumlah yang lebih sedikit. Hal ini dapat mempengaruhi rekomendasi yang diberikan kepada pengguna.    
 3.	Distribusi Kategori Veg/Non-Veg: Analisis menunjukkan bahwa terdapat keseimbangan antara makanan vegetarian dan non-vegetarian, dengan sedikit lebih banyak makanan vegetarian. Ini penting untuk mempertimbangkan preferensi pengguna dalam rekomendasi.    
 
-
 ## Data Preparation
 Pada tahap ini, dilakukan serangkaian teknik persiapan data (data preparation) yang bertujuan untuk memastikan kualitas dan konsistensi data sebelum digunakan dalam pembangunan model rekomendasi. Proses data preparation dilakukan secara berurutan sebagai berikut:    
 1.	**Pemeriksaan Missing Values**
@@ -121,7 +120,10 @@ Fitur gabungan tersebut diproses menggunakan `TfidfVectorizer` untuk menghasilka
 10. **Normalisasi Nilai Rating**
 Kolom `Rating` dinormalisasi ke skala [0, 1] menggunakan rumus min-max normalization. Hal ini penting karena model deep learning yang digunakan (Collaborative Filtering) lebih stabil jika target berada dalam rentang 0–1.
 
-11. **Pembagian Dataset (Data Splitting)**
+11. **Shuffling Data**
+Sebelum membagi dataset menjadi data pelatihan dan validasi, dilakukan shuffling pada dataset `ratings` menggunakan `ratings = ratings.sample(frac=1, random_state=42).reset_index(drop=True)`. Teknik ini bertujuan untuk mengacak urutan data sehingga model tidak terpengaruh oleh urutan data yang mungkin memiliki pola tertentu.
+
+12. **Pembagian Dataset (Data Splitting)**
 Dataset `ratings` dibagi menjadi data pelatihan (80%) dan data validasi (20%) secara acak. Hal ini bertujuan untuk mengevaluasi performa model pada data yang tidak dilatih. Fitur input (`user`, `food`) dan target (`rating_norm`) dipisahkan untuk digunakan pada tahap pelatihan model Collaborative Filtering.
 
 ## Modeling
@@ -159,7 +161,7 @@ Model ini memanfaatkan interaksi historis pengguna (dalam bentuk rating) untuk m
 5. Setelah pelatihan, model digunakan untuk memprediksi rating makanan yang belum pernah dirating oleh pengguna tertentu.
 6. Makanan dengan prediksi rating tertinggi direkomendasikan ke pengguna.
 
-**Contoh Output dengan ID User 95:**
+**Contoh Output dengan ID User 17:**
 ![Img_2](screenshot/gambar_2.png)
 
 **Kelebihan:**
@@ -186,8 +188,8 @@ Dalam proyek ini, saya menggunakan beberapa metrik evaluasi untuk menilai kinerj
 Hasil ini menunjukkan bahwa dari 5 rekomendasi teratas, hanya 20% yang relevan dengan preferensi pengguna. Ini menunjukkan bahwa meskipun model dapat memberikan beberapa rekomendasi yang relevan, masih ada ruang untuk perbaikan dalam hal akurasi rekomendasi. NDCG yang rendah juga menunjukkan bahwa relevansi item relevan tidak muncul di posisi teratas dalam daftar rekomendasi.
 
 2. Evaluasi Collaborative Filtering:
-- Mean Squared Error (MSE): 0.5049158441478518
-- Root Mean Squared Error (RMSE): 0.7105743058595996
+- Mean Squared Error (MSE): 0.2311313513726633
+- Root Mean Squared Error (RMSE): 0.4807612207454583
 
 **Kesimpulan:**
-Proyek ini berhasil mengembangkan sistem rekomendasi makanan menggunakan dua pendekatan utama: Content-Based Filtering (CBF) dan Collaborative Filtering (CF). Evaluasi menunjukkan bahwa model CBF memiliki Precision@5 dan Recall@5 masing-masing sebesar 0.2000, menandakan bahwa hanya 20% dari rekomendasi teratas yang relevan, dengan NDCG@5 yang rendah (0.1312) menunjukkan perlunya perbaikan dalam akurasi rekomendasi. Sementara itu, model CF menunjukkan MSE sebesar 0.5049 dan RMSE sebesar 0.7106, menunjukkan kesalahan signifikan dalam prediksi rating. Meskipun CF dapat memberikan rekomendasi yang lebih personal, tantangan cold start untuk pengguna baru tetap ada. Oleh karena itu, penerapan metode hybrid yang menggabungkan kedua pendekatan dapat meningkatkan akurasi dan relevansi rekomendasi, serta mengatasi masalah cold start. Secara keseluruhan, sistem rekomendasi ini memiliki potensi besar untuk meningkatkan pengalaman pengguna dan membantu pelaku bisnis kuliner dalam memberikan layanan yang lebih personal dan berbasis data.
+Proyek ini berhasil mengembangkan sistem rekomendasi makanan menggunakan dua pendekatan utama: Content-Based Filtering (CBF) dan Collaborative Filtering (CF). Evaluasi menunjukkan bahwa model CBF memiliki Precision@5 dan Recall@5 masing-masing sebesar 0.2000, menandakan bahwa hanya 20% dari rekomendasi teratas yang relevan, dengan NDCG@5 yang rendah (0.1312) menunjukkan perlunya perbaikan dalam akurasi rekomendasi. Sementara itu, model CF menunjukkan MSE sebesar 0.2311313513726633 dan RMSE sebesar 0.4807612207454583, menunjukkan kesalahan signifikan dalam prediksi rating. Meskipun CF dapat memberikan rekomendasi yang lebih personal, tantangan cold start untuk pengguna baru tetap ada. Oleh karena itu, penerapan metode hybrid yang menggabungkan kedua pendekatan dapat meningkatkan akurasi dan relevansi rekomendasi, serta mengatasi masalah cold start. Secara keseluruhan, sistem rekomendasi ini memiliki potensi besar untuk meningkatkan pengalaman pengguna dan membantu pelaku bisnis kuliner dalam memberikan layanan yang lebih personal dan berbasis data.
