@@ -28,7 +28,7 @@ Pada tahap ini, dilakukan klarifikasi dan pemahaman terhadap masalah bisnis yang
     ### Solution statements
     Dalam mengembangkan sistem rekomendasi makanan, terdapat beberapa pendekatan yang dapat digunakan untuk menghasilkan rekomendasi yang efektif berdasarkan preferensi pengguna dan karakteristik item. Berikut adalah dua pendekatan utama yang dapat diterapkan: **Content-Based Filtering** dan **Collaborative Filtering**.    
 
-    1. **Content-Based Filtering (Penyaringan Berbasis Konten)**
+    a. **Content-Based Filtering (Penyaringan Berbasis Konten)**
     
     Content-based filtering merekomendasikan item kepada pengguna berdasarkan fitur dari item itu sendiri. Pendekatan ini menganalisis atribut dari makanan (misalnya jenis masakan, kategori veg/non-veg, deskripsi bahan) untuk menemukan kesamaan antar item. Sistem merekomendasikan item yang mirip dengan yang telah disukai oleh pengguna sebelumnya.  
 
@@ -43,10 +43,10 @@ Pada tahap ini, dilakukan klarifikasi dan pemahaman terhadap masalah bisnis yang
     - Tidak memerlukan data interaksi pengguna yang banyak dan cocok untuk item baru.
 
     **Kekurangan:**
-    - •	Terbatas pada merekomendasikan item yang mirip dengan item yang sudah pernah dikonsumsi pengguna.
+    - Terbatas pada merekomendasikan item yang mirip dengan item yang sudah pernah dikonsumsi pengguna.
     - Membutuhkan data deskripsi item yang lengkap.    
 
-    2. **Collaborative Filtering (Penyaringan Kolaboratif)**
+    b. **Collaborative Filtering (Penyaringan Kolaboratif)**
     Collaborative filtering merekomendasikan item berdasarkan preferensi pengguna lain yang memiliki kesamaan pola interaksi. Pendekatan ini memanfaatkan data rating pengguna terhadap item untuk mengidentifikasi pola dan kemiripan antar pengguna atau item. Terdapat dua tipe utama: user-based dan item-based collaborative filtering.    
 
     **Langkah Implementasi:**
@@ -62,7 +62,7 @@ Pada tahap ini, dilakukan klarifikasi dan pemahaman terhadap masalah bisnis yang
     - Belajar dari interaksi pengguna, sehingga akurasi rekomendasi meningkat seiring waktu.   
 
     **Kekurangan:** 
-    - •	Memerlukan data interaksi pengguna yang cukup banyak agar efektif.
+    - Memerlukan data interaksi pengguna yang cukup banyak agar efektif.
     - Mengalami masalah cold start pada pengguna atau item baru yang belum memiliki rating.  
 
 ## Data Understanding
@@ -175,16 +175,17 @@ Model ini memanfaatkan interaksi historis pengguna (dalam bentuk rating) untuk m
 ## Evaluation
 Dalam proyek ini, saya menggunakan beberapa metrik evaluasi untuk menilai kinerja model rekomendasi yang dikembangkan, baik untuk Content-Based Filtering (CBF) maupun Collaborative Filtering (CF). Berikut adalah penjelasan mengenai metrik yang digunakan dan hasil evaluasi berdasarkan metrik tersebut.
 **Metrik Evaluasi:**
-1. Precision@k: Precision mengukur proporsi rekomendasi yang relevan di antara k rekomendasi teratas. Ini memberikan gambaran tentang seberapa banyak dari rekomendasi yang diberikan yang benar-benar sesuai dengan preferensi pengguna.
-2. Recall@k: Recall mengukur proporsi item relevan yang berhasil direkomendasikan di antara semua item relevan yang ada. Ini menunjukkan seberapa baik model dalam menemukan item yang relevan.
-3. NDCG@k (Normalized Discounted Cumulative Gain): NDCG mengukur kualitas peringkat rekomendasi dengan mempertimbangkan posisi item relevan dalam daftar rekomendasi. Ini memberikan bobot lebih pada item relevan yang muncul lebih awal dalam daftar.
-4. Mean Squared Error (MSE) dan Root Mean Squared Error (RMSE): MSE mengukur rata-rata kuadrat selisih antara nilai yang diprediksi dan nilai aktual. RMSE adalah akar kuadrat dari MSE dan memberikan ukuran kesalahan dalam satuan yang sama dengan data asli.
+1. **Precision@k**: Precision mengukur proporsi rekomendasi yang relevan di antara k rekomendasi teratas. Ini memberikan gambaran tentang seberapa banyak dari rekomendasi yang diberikan yang benar-benar sesuai dengan preferensi pengguna.
+2. **Recall@k**: Recall mengukur proporsi item relevan yang berhasil direkomendasikan di antara semua item relevan yang ada. Ini menunjukkan seberapa baik model dalam menemukan item yang relevan.
+3. **NDCG@k (Normalized Discounted Cumulative Gain)**: NDCG mengukur kualitas peringkat rekomendasi dengan mempertimbangkan posisi item relevan dalam daftar rekomendasi. Ini memberikan bobot lebih pada item relevan yang muncul lebih awal dalam daftar.
+4. **Mean Squared Error (MSE) dan Root Mean Squared Error (RMSE)**: MSE mengukur rata-rata kuadrat selisih antara nilai yang diprediksi dan nilai aktual. RMSE adalah akar kuadrat dari MSE dan memberikan ukuran kesalahan dalam satuan yang sama dengan data asli.
 
 **Hasil Proyek Berdasarkan Metrik Evaluasi:**
 1. Evaluasi Content-Based Filtering:
 - Precision@5: 0.2000
 - Recall@5: 0.2000
 - NDCG@5: 0.1312
+
 Hasil ini menunjukkan bahwa dari 5 rekomendasi teratas, hanya 20% yang relevan dengan preferensi pengguna. Ini menunjukkan bahwa meskipun model dapat memberikan beberapa rekomendasi yang relevan, masih ada ruang untuk perbaikan dalam hal akurasi rekomendasi. NDCG yang rendah juga menunjukkan bahwa relevansi item relevan tidak muncul di posisi teratas dalam daftar rekomendasi.
 
 2. Evaluasi Collaborative Filtering:
